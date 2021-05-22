@@ -1,53 +1,44 @@
-import edu.berkeley.cs.jqf.fuzz.Fuzz;
-import edu.berkeley.cs.jqf.fuzz.JQF;
+import com.code_intelligence.jazzer.api.FuzzedDataProvider;
+import com.code_intelligence.jazzer.api.FuzzerSecurityIssueMedium;
 import org.junit.Assume;
 import org.junit.runner.RunWith;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
+import java.util.Base64;
+import java.util.ArrayList;
 
-@RunWith(JQF.class)
 public class FuzzDriver {
-
-    public static void main(String[] args) {
-	FuzzDriver me = new FuzzDriver();
-	FileInputStream fis = null;
+    public static void fuzzerTestOneInput(FuzzedDataProvider data) {
 	try {
-	    File inputFile = new File(args[0]);
-	    fis = new FileInputStream(inputFile);
-	} catch (IOException e) {
-	    e.printStackTrace();
+	    byte[] raw = Base64.getDecoder().decode(data.consumeString(9999));
+	    InputStream input = new ByteArrayInputStream(raw);
+	    ObjectInputStream ois = new ObjectInputStream(input);
+	    Object o = ois.readObject();
+	} catch (InvalidClassException ice) {
+	} catch (IllegalArgumentException ice) {
+	} catch (IOException ioe) {
+	} catch (ClassNotFoundException cnfe) {
+	    throw new FuzzerSecurityIssueMedium("ClassNotFoundException");
 	}
-	me.fuzz(fis);
+    }
+}
+
+
+class SafeObjectInputStream extends ObjectInputStream {
+
+    ArrayList<String> allowedTypes;
+
+    public SafeObjectInputStream(InputStream inputStream) throws IOException {
+        super(inputStream);
+        allowedTypes = new ArrayList<>();
+        allowedTypes.add(String.class.getName());
     }
 
-        private String stringfromIs(InputStream is)
-	throws IOException {
+    @Override
+    protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
 
-	StringBuilder textBuilder = new StringBuilder();
-	try (Reader reader = new BufferedReader(new InputStreamReader
-						(is, Charset.forName(StandardCharsets.UTF_8.name())))) {
-	    int c = 0;
-	    while ((c = reader.read()) != -1) {
-		textBuilder.append((char) c);
-	    }
-	}
-	return textBuilder.toString();
-    }
+        if (!allowedTypes.contains(desc.getName()))
+            throw new InvalidClassException("Unauthorized deserialization attempt", desc.getName());
 
-
-    @Fuzz /* JQF will generate inputs to this method */
-    public void fuzz(InputStream input)  {
-	// Init code here
-	System.out.println("Test code");
-	/*
-        try {
-	    // Test case here
-        } catch (IOException e) {
-            // This exception signals invalid input and not a test failure
-            Assume.assumeNoException(e);
-        }
-	*/
+        return super.resolveClass(desc);
     }
 }

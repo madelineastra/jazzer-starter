@@ -11,13 +11,16 @@ public class FuzzDriver {
 	try {
 	    byte[] raw = Base64.getDecoder().decode(data.consumeString(9999));
 	    InputStream input = new ByteArrayInputStream(raw);
-	    ObjectInputStream ois = new ObjectInputStream(input);
+	    ObjectInputStream ois = new SafeObjectInputStream(input);
 	    Object o = ois.readObject();
+	    if(!o.getClass().toString().contains("java.lang")) {
+		throw new FuzzerSecurityIssueMedium("Invalid class created" + o.getClass().toString());
+	    }
 	} catch (InvalidClassException ice) {
 	} catch (IllegalArgumentException ice) {
 	} catch (IOException ioe) {
 	} catch (ClassNotFoundException cnfe) {
-	    throw new FuzzerSecurityIssueMedium("ClassNotFoundException");
+	} catch (Exception e) {
 	}
     }
 }

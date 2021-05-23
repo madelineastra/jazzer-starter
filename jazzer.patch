@@ -1,0 +1,26 @@
+From d538da7763d9d41f23de8eb302b2d2f75830dfc8 Mon Sep 17 00:00:00 2001
+From: Madeline Smith <madeline.astra@gmail.com>
+Date: Sat, 22 May 2021 18:22:44 -0700
+Subject: [PATCH] Added coverage for java.io classes
+
+---
+ .../com/code_intelligence/jazzer/agent/RuntimeInstrumentor.kt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/agent/src/main/java/com/code_intelligence/jazzer/agent/RuntimeInstrumentor.kt b/agent/src/main/java/com/code_intelligence/jazzer/agent/RuntimeInstrumentor.kt
+index 79964b7..86298a0 100644
+--- a/agent/src/main/java/com/code_intelligence/jazzer/agent/RuntimeInstrumentor.kt
++++ b/agent/src/main/java/com/code_intelligence/jazzer/agent/RuntimeInstrumentor.kt
+@@ -39,7 +39,9 @@ private val BASE_INCLUDED_CLASS_NAME_GLOBS = listOf(
+ private val BASE_EXCLUDED_CLASS_NAME_GLOBS = listOf(
+     "\\[**", // array types
+     "com.sun.**", // package for Proxy objects
+-    "java.**",
++    "java.util.**",
++    "java.lang.**",
++    "java.nio.**",
+     "jaz.Ter", // safe companion of the honeypot class used by sanitizers
+     "jaz.Zer", // honeypot class used by sanitizers
+     "jdk.**",
+--
+2.25.1
